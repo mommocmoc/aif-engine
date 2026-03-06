@@ -1,5 +1,7 @@
 # AIF (Agent Interfaces Framework) 🤖💻
 
+[🇰🇷 한국어 버전 읽기 (Read in Korean)](README_ko.md)
+
 > **Stop building heavy MCP servers. Give AI Agents what they really want: A fast, composable, single-binary CLI.**
 
 ## The Problem
