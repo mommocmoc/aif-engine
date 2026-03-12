@@ -19,9 +19,11 @@ type Command struct {
 }
 
 type Spec struct {
-	Name     string    `json:"name"`
-	Short    string    `json:"short"`
-	Commands []Command `json:"commands"`
+	Name       string    `json:"name"`
+	Short      string    `json:"short"`
+	AuthHeader string    `json:"auth_header"`
+	AuthPrefix string    `json:"auth_prefix"`
+	Commands   []Command `json:"commands"`
 }
 
 const cliTemplate = `package main
@@ -156,7 +158,9 @@ func main() {
 				fmt.Printf("{\"error\": \"%v\"}\n", reqErr)
 				os.Exit(1)
 			}
-			req.Header.Set("Authorization", "Apikey "+token)
+			authHeader := "{{if $.AuthHeader}}{{$.AuthHeader}}{{else}}Authorization{{end}}"
+			authPrefix := "{{if $.AuthPrefix}}{{$.AuthPrefix}}{{else}}Apikey {{end}}"
+			req.Header.Set(authHeader, authPrefix+token)
 
 			client := &http.Client{}
 			resp, doErr := client.Do(req)
