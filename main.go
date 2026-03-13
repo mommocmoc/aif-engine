@@ -14,6 +14,7 @@ type Command struct {
 	Short       string   `json:"short"`
 	Method      string   `json:"method"`
 	Endpoint    string   `json:"endpoint"`
+	PayloadType string   `json:"payload_type"` // "json" or "" (default multipart)
 	Flags       []string `json:"flags"`
 	ArrayFlags  []string `json:"array_flags"`
 }
@@ -131,7 +132,25 @@ func main() {
 			u.RawQuery = q.Encode()
 			req, reqErr = http.NewRequest("GET", u.String(), nil)
 			{{else}}
-			// POST/PUT Request logic (Multipart Form)
+			// POST/PUT Request logic
+			{{if eq .PayloadType "json"}}
+			// JSON Payload
+			payloadMap := make(map[string]interface{})
+			{{range .Flags}}
+			if val, _ := cmd.Flags().GetString("{{.}}"); val != "" {
+				payloadMap["{{.}}"] = val
+			}
+			{{end}}
+			{{range .ArrayFlags}}
+			if arr, _ := cmd.Flags().GetStringSlice("{{.}}"); len(arr) > 0 {
+				payloadMap["{{.}}"] = arr
+			}
+			{{end}}
+			jsonBody, _ := json.Marshal(payloadMap)
+			req, reqErr = http.NewRequest("{{.Method}}", reqURL, bytes.NewBuffer(jsonBody))
+			req.Header.Set("Content-Type", "application/json")
+			{{else}}
+			// Multipart Form
 			body := &bytes.Buffer{}
 			writer := multipart.NewWriter(body)
 			
@@ -152,6 +171,7 @@ func main() {
 			writer.Close()
 			req, reqErr = http.NewRequest("{{.Method}}", reqURL, body)
 			req.Header.Set("Content-Type", writer.FormDataContentType())
+			{{end}}
 			{{end}}
 
 			if reqErr != nil {
